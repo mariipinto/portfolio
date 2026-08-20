@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Case — [preencher: nome]</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bodoni+Moda:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="theme.js"></script>
+</head>
+<body>
+
+<header class="site" id="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand" id="brand-name">[nome]</a>
+    <nav class="links">
+      <a href="index.html#cases" class="navlink" id="nav-cases">cases</a>
+      <a href="index.html#sobre" class="navlink" id="nav-sobre">sobre</a>
+      <a href="index.html#contato" class="navlink" id="nav-contato">contato</a>
+      <a href="index.html" class="navlink" id="resume-link" target="_blank">currículo</a>
+      <button id="lang-toggle" aria-label="Mudar idioma">PT / EN</button>
+      <button id="theme-toggle" aria-label="Alternar tema">
+        <span class="dot"></span><span id="theme-label">light</span>
+      </button>
+      <button id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    </nav>
+  </div>
+  <div class="nav-mobile-panel">
+    <a href="index.html#cases" class="navlink" id="nav-cases-mobile">cases</a>
+    <a href="index.html#sobre" class="navlink" id="nav-sobre-mobile">sobre</a>
+    <a href="index.html#contato" class="navlink" id="nav-contato-mobile">contato</a>
+  </div>
+</header>
+
+<main class="wrap" id="case-root"></main>
+
+<div class="lightbox-overlay" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">✕ fechar</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <p class="label-mono" id="footer-name">© <span id="footer-year"></span> [nome]</p>
+    <p class="label-mono" id="footer-local">Recife, Brasil</p>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script>
+function qs(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+function getLang() {
+  const fromUrl = qs("lang");
+  if (fromUrl === "pt" || fromUrl === "en") return fromUrl;
+  try { return localStorage.getItem("lang") || "pt"; } catch (e) { return "pt"; }
+}
+function setLang(lang) {
+  try { localStorage.setItem("lang", lang); } catch (e) {}
+}
+
+// --- rendering helpers -----------------------------------------------
+function isEmpty(v) {
+  if (v === undefined || v === null || v === "") return true;
+  if (Array.isArray(v) && v.length === 0) return true;
+  return false;
+}
+function list(items) {
+  return "<ul>" + items.map(i => "<li>" + i + "</li>").join("") + "</ul>";
+}
+// Accepts a string (one paragraph) or an array of strings (several
+// paragraphs) and renders the right markup either way.
+function paras(content) {
+  const arr = Array.isArray(content) ? content : [content];
+  return arr.map(t => "<p>" + t + "</p>").join("");
+}
+// eyebrow + content block, skipped entirely when content is empty so
+// cases that don't have a given field simply don't show that section.
+function block(eyebrow, innerHtml) {
+  if (isEmpty(innerHtml)) return "";
+  return "<div class='detail-block'><div class='eyebrow'>" + eyebrow + "</div><div class='content'>" + innerHtml + "</div></div>";
+}
+function imageSlot(img) {
+  if (!img) return "";
+  if (img.src) {
+    return (
+      "<figure class='case-figure'>" +
+        "<div class='case-figure-frame'><img src='" + img.src + "' alt='" + img.label + " — " + img.descricao + "' loading='lazy'></div>" +
+        "<figcaption><span class='lbl'>" + img.label + "</span><span class='desc'>" + img.descricao + "</span></figcaption>" +
+      "</figure>"
+    );
+  }
+  return "<div class='image-slot'><div><div class='lbl'>" + img.label + "</div><div class='desc'>" + img.descricao + "</div></div></div>";
+}
+function pillList(items) {
+  if (isEmpty(items)) return "";
+  return "<div class='case-detail-tags'>" + items.map(t => "<span class='case-tag'>" + t + "</span>").join("") + "</div>";
+}
+
+const slug = qs("slug");
+
+function render(lang) {
+  const T = I18N[lang];
+  document.getElementById("html-root").lang = lang === "pt" ? "pt-BR" : "en";
+  document.getElementById("lang-toggle").textContent = lang === "pt" ? "PT / EN" : "EN / PT";
+
+  document.getElementById("brand-name").textContent = T.site.nome;
+  document.getElementById("footer-name").innerHTML = "© <span id='footer-year'></span> " + T.site.nome;
+  document.getElementById("footer-year").textContent = new Date().getFullYear();
+  document.getElementById("footer-local").textContent = T.ui.footer.local;
+  document.getElementById("nav-cases").textContent = T.ui.nav.cases;
+  document.getElementById("nav-sobre").textContent = T.ui.nav.sobre;
+  document.getElementById("nav-contato").textContent = T.ui.nav.contato;
+  document.getElementById("nav-cases-mobile").textContent = T.ui.nav.cases;
+  document.getElementById("nav-sobre-mobile").textContent = T.ui.nav.sobre;
+  document.getElementById("nav-contato-mobile").textContent = T.ui.nav.contato;
+  document.getElementById("resume-link").textContent = T.ui.nav.curriculo;
+  document.getElementById("theme-toggle").setAttribute("aria-label", T.ui.aria.tema);
+  document.getElementById("nav-toggle").setAttribute("aria-label", T.ui.aria.menu);
+  document.getElementById("lang-toggle").setAttribute("aria-label", T.ui.aria.idioma);
+
+  const c = T.cases.find(x => x.slug === slug) || T.cases[0];
+  document.getElementById("page-title").textContent = c.title + " — " + T.site.nome;
+
+  const L = T.caseLabels;
+  const specRows = [
+    { k: L.empresa, v: c.meta.empresa },
+    { k: L.squad, v: c.meta.squad },
+    { k: L.papel, v: c.meta.papel },
+    { k: L.periodo, v: c.meta.periodo },
+    { k: L.ferramentas, v: c.meta.stack },
+  ].map(r => "<div class='spec-row'><span class='k'>" + r.k + "</span><span>" + r.v + "</span></div>").join("");
+
+  const decisoesHtml = (c.decisoes || []).map(d =>
+    "<div class='decision'><div class='t'>" + d.titulo + "</div><div>" + d.descricao + "</div></div>"
+  ).join("");
+
+  const tradeCostLabel = lang === "pt" ? "escolha" : "choice";
+  const tradeChoiceLabel = lang === "pt" ? "custo" : "cost";
+  const tradeoffsHtml = (c.tradeoffs || []).map(t => {
+    if (t.titulo) {
+      return "<div class='decision'><div class='t'>" + t.titulo + "</div><div>" + t.descricao + "</div></div>";
+    }
+    return "<div class='tradeoff'><p><span class='k'>" + tradeCostLabel + " —</span> " + t.escolha + "</p><p><span class='k'>" + tradeChoiceLabel + " —</span> " + t.custo + "</p></div>";
+  }).join("");
+
+  const estrategiaHtml = (c.estrategia || []).map(p =>
+    "<div class='decision'><div class='t'>" + p.titulo + "</div><div>" + p.descricao + "</div></div>"
+  ).join("");
+
+  let solucaoHtml = "";
+  if (c.solucao) {
+    solucaoHtml = "<p>" + c.solucao.intro + "</p>" + list(c.solucao.itens) + (c.solucao.fechamento ? "<p>" + c.solucao.fechamento + "</p>" : "");
+  }
+
+  let resultadoHtml = "";
+  if (!isEmpty(c.resultados)) {
+    resultadoHtml = list(c.resultados) + (c.resultadosNota ? "<p class='result-note'>" + c.resultadosNota + "</p>" : "");
+  }
+
+  const currentIndex = T.cases.findIndex(x => x.slug === c.slug);
+  const next = T.cases[(currentIndex + 1) % T.cases.length];
+
+  const parts = [
+    "<a class='back-link label-mono' href='index.html?lang=" + lang + "#cases'>" + T.ui.misc.todosOsCases + "</a>",
+    "<h1 class='case-title'>" + c.title + "</h1>",
+    "<p class='case-oneliner'>" + c.oneLiner + "</p>",
+    pillList(c.tags),
+    "<div class='spec-block' style='max-width:480px;margin:24px 0 32px;'>" + specRows + "</div>",
+    block(L.problema, isEmpty(c.problema) ? "" : paras(c.problema)),
+    block(L.contexto, isEmpty(c.contexto) ? "" : paras(c.contexto)),
+    block(L.desafio, isEmpty(c.desafio) ? "" : paras(c.desafio)),
+    block(L.objetivos, isEmpty(c.objetivos) ? "" : list(c.objetivos)),
+    block(L.meuPapel, isEmpty(c.papel) ? "" : (Array.isArray(c.papel) ? list(c.papel) : paras(c.papel))),
+    imageSlot(c.imagens && c.imagens[0]),
+    block(L.hipoteses, isEmpty(c.hipoteses) ? "" : list(c.hipoteses)),
+    block(L.discovery, isEmpty(c.discovery) ? "" : paras(c.discovery)),
+    block(L.pesquisa, isEmpty(c.pesquisa) ? "" : paras(c.pesquisa)),
+    block(L.insights, isEmpty(c.insights) ? "" : list(c.insights)),
+    block(L.estrategia, estrategiaHtml),
+    block(L.processo, isEmpty(c.processo) ? "" : paras(c.processo)),
+    imageSlot(c.imagens && c.imagens[1]),
+    block(L.tradeoffs, tradeoffsHtml),
+    block(L.decisao, decisoesHtml),
+    block(L.prototipacao, isEmpty(c.prototipacao) ? "" : paras(c.prototipacao)),
+    block(L.solucao, solucaoHtml),
+    imageSlot(c.imagens && c.imagens[3]),
+    block(L.componentLibrary, isEmpty(c.componentLibrary) ? "" : paras(c.componentLibrary)),
+    block(L.colaboracao, isEmpty(c.colaboracao) ? "" : paras(c.colaboracao)),
+    block(L.validacao, isEmpty(c.validacao) ? "" : paras(c.validacao)),
+    imageSlot(c.imagens && c.imagens[2]),
+    block(L.handoff, isEmpty(c.handoff) ? "" : paras(c.handoff)),
+    block(L.resultado, resultadoHtml),
+    imageSlot(c.imagens && c.imagens[4]),
+    block(L.aprendizados, isEmpty(c.aprendizados) ? "" : list(c.aprendizados)),
+    block(L.fechamento, isEmpty(c.fechamento) ? "" : "<p class='closing-reflection'>" + c.fechamento + "</p>"),
+    block(L.proximosPassos, isEmpty(c.proximosPassos) ? "" : list(c.proximosPassos)),
+    "<div class='next-case'>" +
+      "<p class='eyebrow'>" + T.ui.misc.proximoCase + "</p>" +
+      "<a class='row' href='case.html?slug=" + encodeURIComponent(next.slug) + "&lang=" + lang + "'>" +
+        "<span class='title'>" + next.title + "</span><span class='arrow'>→</span>" +
+      "</a>" +
+    "</div>",
+  ];
+
+  document.getElementById("case-root").innerHTML = parts.join("");
+}
+
+let currentLang = getLang();
+render(currentLang);
+
+document.getElementById("lang-toggle").addEventListener("click", function () {
+  currentLang = currentLang === "pt" ? "en" : "pt";
+  setLang(currentLang);
+  render(currentLang);
+});
+
+// Lightbox: click any case figure to zoom in, click again (or the
+// close button, or Escape) to dismiss.
+const lightbox = document.getElementById("lightbox");
+const lightboxImg = document.getElementById("lightbox-img");
+function openLightbox(src, alt) {
+  lightboxImg.src = src;
+  lightboxImg.alt = alt;
+  lightbox.classList.add("open");
+}
+function closeLightbox() {
+  lightbox.classList.remove("open");
+  lightboxImg.src = "";
+}
+document.getElementById("case-root").addEventListener("click", function (e) {
+  const frame = e.target.closest(".case-figure-frame");
+  if (frame) {
+    const img = frame.querySelector("img");
+    openLightbox(img.src, img.alt);
+  }
+});
+lightbox.addEventListener("click", closeLightbox);
+document.getElementById("lightbox-close").addEventListener("click", function (e) {
+  e.stopPropagation();
+  closeLightbox();
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") closeLightbox();
+});
+</script>
+</body>
+</html>
